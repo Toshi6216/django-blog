@@ -8,6 +8,8 @@ from . import forms
 from django.urls import reverse
 
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 #TopページのIndexページのview
 class IndexView(ListView):
@@ -84,8 +86,10 @@ class PostEditView(LoginRequiredMixin, UpdateView):
         return reverse("index") #入力フォーム内容がセーブできた時の遷移先
 
     def get_context_data(self, **kwargs):
-        print("get_context_data 最初")
-
+        post_data = Post.objects.get(pk=self.kwargs['pk'])
+        if not self.request.user == post_data.author:
+            raise Http404 #編集する記事のauthorとrequest.userが違うとエラー表示
+            
         ctx=super(PostEditView, self).get_context_data(**kwargs) #オーバーライド前のget_context_dataで返されるオブジェクトを格納
         
         if self.request.method=="POST": #"POST"が呼び出されたときの処理
